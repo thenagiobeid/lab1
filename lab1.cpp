@@ -1,13 +1,12 @@
+//Modified by: Nagi Obeid
+//Date: 9-20-19
 
-//modified by:Nagi Obeid
-//date: 9-8-19
-//
-//3350 Spring 2019 Lab-1
+//3350 Spring 2019 Lab-1 // Homework-1
 //This program demonstrates the use of OpenGL and XWindows
-//
+
 //Assignment is to modify this program.
 //You will follow along with your instructor.
-//
+
 //Elements to be learned in this lab...
 // .general animation framework
 // .animation loop
@@ -21,14 +20,14 @@
 // .dynamic memory allocation
 // .simple opengl components
 // .git
-//
+
 //elements we will add to program...
-//   .Game constructor
-//   .multiple particles
-//   .gravity
-//   .collision detection
-//   .more objects
-//
+// .Game constructor
+// .multiple particles
+// .gravity
+// .collision detection
+// .more objects
+
 #include <iostream>
 using namespace std;
 #include <stdio.h>
@@ -41,7 +40,7 @@ using namespace std;
 #include <GL/glx.h>
 #include "fonts.h"
 const int MAX_PARTICLES = 2000;
-const float GRAVITY     = 0.1;
+const float GRAVITY    	= .05;//0.10;
 
 //some structures
 
@@ -61,26 +60,27 @@ struct Particle {
 };
 
 class Global {
-public:
-	int xres, yres;
-	Shape box;
-	Particle particle[MAX_PARTICLES];
-	int n;
-	Global();
+	public:
+		int xres, yres;
+		Shape box; 
+		//Shape box[5];
+		Particle particle[MAX_PARTICLES];
+		int n;
+		Global();
 } g;
 
 class X11_wrapper {
-private:
-	Display *dpy;
-	Window win;
-	GLXContext glc;
-public:
-	~X11_wrapper();
-	X11_wrapper();
-	void set_title();
-	bool getXPending();
-	XEvent getXNextEvent();
-	void swapBuffers();
+	private:
+		Display *dpy;
+		Window win;
+		GLXContext glc;
+	public:
+		~X11_wrapper();
+		X11_wrapper();
+		void set_title();
+		bool getXPending();
+		XEvent getXNextEvent();
+		void swapBuffers();
 } x11;
 
 //Function prototypes
@@ -121,14 +121,12 @@ int main()
 //-----------------------------------------------------------------------------
 Global::Global()
 {
-	xres = 800;
-	yres = 600;
-	//define a box shape
-	box.width = 100;
+	xres = 500; //800
+	yres = 360; //600
+	box.width = 70;
 	box.height = 10;
-	box.center.x = 120 + 5*65;
-	box.center.y = 500 - 5*60;
-	n = 0;
+	box.center.x = 110; //+ 5*65;
+	box.center.y = 300; //- 5*60;
 }
 
 //-----------------------------------------------------------------------------
@@ -164,7 +162,7 @@ X11_wrapper::X11_wrapper()
 		PointerMotionMask |
 		StructureNotifyMask | SubstructureNotifyMask;
 	win = XCreateWindow(dpy, root, 0, 0, w, h, 0, vi->depth,
-		InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
+			InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
 	set_title();
 	glc = glXCreateContext(dpy, vi, NULL, GL_TRUE);
 	glXMakeCurrent(dpy, win, glc);
@@ -223,8 +221,8 @@ void makeParticle(int x, int y)
 	Particle *p = &g.particle[g.n];
 	p->s.center.x = x;
 	p->s.center.y = y;
-	p->velocity.y =   ((double)rand() /(double)RAND_MAX) -0.5;
-	p->velocity.x =   ((double)rand() /(double)RAND_MAX) -0.5 + .25;
+	p->velocity.y = ((double)rand() /(double)RAND_MAX) - 2.5;//- 0.25;//0.525;
+	p->velocity.x = ((double)rand() /(double)RAND_MAX) + 0.10; //0.525;
 	++g.n;
 }
 
@@ -235,8 +233,8 @@ void check_mouse(XEvent *e)
 
 	//Weed out non-mouse events
 	if (e->type != ButtonRelease &&
-		e->type != ButtonPress &&
-		e->type != MotionNotify) {
+			e->type != ButtonPress &&
+			e->type != MotionNotify) {
 		//This is not a mouse event that we care about.
 		return;
 	}
@@ -248,6 +246,13 @@ void check_mouse(XEvent *e)
 		if (e->xbutton.button==1) {
 			//Left button was pressed.
 			int y = g.yres - e->xbutton.y;
+			makeParticle(e->xbutton.x, y);
+			makeParticle(e->xbutton.x, y);
+			makeParticle(e->xbutton.x, y);
+			makeParticle(e->xbutton.x, y);
+			makeParticle(e->xbutton.x, y);
+			makeParticle(e->xbutton.x, y);
+			makeParticle(e->xbutton.x, y);
 			makeParticle(e->xbutton.x, y);
 			makeParticle(e->xbutton.x, y);
 			makeParticle(e->xbutton.x, y);
@@ -273,11 +278,11 @@ void check_mouse(XEvent *e)
 		if (savex != e->xbutton.x || savey != e->xbutton.y) {
 			savex = e->xbutton.x;
 			savey = e->xbutton.y;
-		//Code placed here will execute whenever the mouse moves.
-		int y = g.yres - e->xbutton.y;
-		for (int i = 0 ;i < 10; i++)
-		    makeParticle(e->xbutton.x, y);
-
+			//Code placed here will execute whenever the mouse moves.
+			int y = g.yres - e->xbutton.y;
+			for (int i = 0 ;i < 10; i++) {
+				makeParticle(e->xbutton.x, y);
+			}
 		}
 	}
 }
@@ -305,95 +310,149 @@ int check_keys(XEvent *e)
 
 void movement()
 {
+
 	if (g.n <= 0)
 		return;
+
 	for (int i = 0; i < g.n; i++)
 	{
-	Particle *p = &g.particle[i];
-	p->s.center.x += p->velocity.x;
-	p->s.center.y += p->velocity.y;
-	p->velocity.y -= GRAVITY;
-	//check for collision with shapes...
-	//Shape *s;
-	Shape *s = &g.box;
-	if(p->s.center.y < s->center.y + s->height
-	   && p->s.center.y > s->center.y - s->height
-	   && p->s.center.x > s->center.x - s->width 
-	   && p->s.center.x < s->center.x + s->width)
-	    p->velocity.y = -p->velocity.y;
+		Particle *p = &g.particle[i];
+		p = &g.particle[i];
+		p->s.center.x += p->velocity.x;
+		p->s.center.y += p->velocity.y;
+		p->velocity.y -= GRAVITY;
 
+		Shape *s[5];
+		
+		for (int j = 0; j < 5 ; j++){
+		int incValue;
 
+		switch ( j ) {
+			case 0:
+				incValue = 0;
+				break;
+			case 1:
+				incValue = 40;
+				break;
+			case 2:
+				incValue = 80;
+				break;
+			case 3:
+				incValue = 120;
+				break;
+			case 4:
+				incValue = 160;
+				break;}
+		s[j] = &g.box;
+		if (p->s.center.y < s[j]->center.y - incValue + s[j]->height
+				&& p->s.center.y > s[j]->center.y - incValue - s[j]->height
+				&& p->s.center.x > s[j]->center.x + incValue - s[j]->width 
+				&& p->s.center.x < s[j]->center.x + incValue + s[j]->width)
+			p->velocity.y = -p->velocity.y / 6;
+			
+		}
 
-	//check for off-screen
-	if (p->s.center.y < 0.0) {
-		cout << "off screen" << endl;
-		//g.n = 0;
-		g.particle[i] = g.particle[g.n-1];
-		--g.n;
+		//check for off-screen
+		if (p->s.center.y < 0.0) {
+			cout << "off screen" << endl;
+			//g.n = 0;
+			g.particle[i] = g.particle[g.n-1];
+			--g.n;
+		}
 	}
-}
 }
 
 void render()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
-	//Draw shapes...
-	//draw the box
-	Shape *s;
 	glColor3ub(90,140,90);
-	s = &g.box;
-	glPushMatrix();
-	glTranslatef(s->center.x, s->center.y, s->center.z);
+	Shape *s[5];
 	float w, h;
-	w = s->width;
-	h = s->height;
-	glBegin(GL_QUADS);
+	int incValue;
+	Rect r;
+	r.center = 0;
+	
+	for (int i = 0; i < 5 ; i++) {	
+		switch ( i ) {
+			case 0:
+				incValue = 0;
+				break;
+			case 1:
+				incValue = 40;
+				break;
+			case 2:
+				incValue = 80;
+				break;
+			case 3:
+				incValue = 120;
+				break;
+			case 4:
+				incValue = 160;
+				break;
+		}
+		
+		s[i] = &g.box;	
+		glPushMatrix();
+		glTranslatef(s[i]->center.x + incValue, s[i]->center.y - incValue, s[i]->center.z);	
+		w = s[i]->width;
+		h = s[i]->height;
+		glBegin(GL_QUADS);
 		glVertex2i(-w, -h);
 		glVertex2i(-w,  h);
 		glVertex2i( w,  h);
 		glVertex2i( w, -h);
-	glEnd();
-	glPopMatrix();
-	//
-	//Draw particles here
-	//if (g.n > 0) {
-	
-	for (int i = 0; i < g.n; i++){
-		//There is at least one particle to draw.
+		glEnd();
+		glPopMatrix();
+}
+
+	for (int k = 0; k < g.n; k++) {
 		glPushMatrix();
-		glColor3ub(150,160,220);
-		Vec *c = &g.particle[i].s.center;
+	//	glColor3ub(150,160,220);
+		Vec *c = &g.particle[k].s.center;
 		w = h = 2;
 		glBegin(GL_QUADS);
-			glVertex2i(c->x-w, c->y-h);
-			glVertex2i(c->x-w, c->y+h);
-			glVertex2i(c->x+w, c->y+h);
-			glVertex2i(c->x+w, c->y-h);
+		glColor3ub(150,160,220);
+		glVertex2i(c->x-w, c->y-h);
+		glVertex2i(c->x-w, c->y+h);
+		glVertex2i(c->x+w, c->y+h);
+		glVertex2i(c->x+w, c->y-h);
 		glEnd();
 		glPopMatrix();
 	}
-	//ADDED 9-8-19
-	//CREATE TEXT
-	Rect r;
-	r.bot = 195;
-	r.left = 405;
-	r.center = 0;
-	ggprint8b(&r, 16, 0x00ff0000, "REQUIREMENTS");
+	
+	for (int j = 0; j < 5 ; j++) {
+		switch ( j ) {
+			case 0:
+				incValue = 0;
+				r.left = s[j]->center.x + incValue - 40;
+				r.bot = s[j]->center.y - incValue - 5;
+				ggprint8b(&r, 16, 0x00ff0000, "Requirements");
+				break;
+			case 1:
+				incValue = 40;
+				r.left = s[j]->center.x + incValue - 25;
+				r.bot = s[j]->center.y - incValue - 5;
+				ggprint8b(&r, 16, 0x00ff0000, "Design");
+				break;
+			case 2:
+				incValue = 80;
+				r.left = s[j]->center.x + incValue - 25;
+				r.bot = s[j]->center.y - incValue - 5;
+				ggprint8b(&r, 16, 0x00ff0000, "Coding");
+				break;
+			case 3:
+				incValue = 120;
+				r.left = s[j]->center.x + incValue - 25;
+				r.bot = s[j]->center.y - incValue - 5;
+				ggprint8b(&r, 16, 0x00ff0000, "Testing");
+				break;
+			case 4:
+				incValue = 160;
+				r.left = s[j]->center.x + incValue - 25;
+				r.bot = s[j]->center.y - incValue - 5;
+				ggprint8b(&r, 16, 0x00ff0000, "Maintenace");
+				break;
+		}
+	}
 }
-	//
-	//Draw your 2D text here
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
