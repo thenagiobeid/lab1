@@ -40,7 +40,8 @@ using namespace std;
 #include <GL/glx.h>
 #include "fonts.h"
 const int MAX_PARTICLES = 2000;
-const float GRAVITY    	= .05;//0.10;
+//MODIFIED GRAVITY ON 9-8-19
+const float GRAVITY    	= .05;
 
 //some structures
 
@@ -63,7 +64,6 @@ class Global {
 	public:
 		int xres, yres;
 		Shape box; 
-		//Shape box[5];
 		Particle particle[MAX_PARTICLES];
 		int n;
 		Global();
@@ -90,8 +90,6 @@ int check_keys(XEvent *e);
 void movement();
 void render();
 
-
-
 //=====================================
 // MAIN FUNCTION IS HERE
 //=====================================
@@ -102,7 +100,7 @@ int main()
 	//Main animation loop
 	int done = 0;
 	while (!done) {
-		//Process external events.
+	//Process external events.
 		while (x11.getXPending()) {
 			XEvent e = x11.getXNextEvent();
 			check_mouse(&e);
@@ -112,7 +110,8 @@ int main()
 		render();
 		x11.swapBuffers();
 	}
-	cleanup_fonts(); //ADDED 9-8-19
+	//CLEANUP_FONTS ADDED 9-8-19
+	cleanup_fonts();
 	return 0;
 }
 
@@ -121,12 +120,14 @@ int main()
 //-----------------------------------------------------------------------------
 Global::Global()
 {
-	xres = 500; //800
-	yres = 360; //600
+	//WINDOWS SIZE CHANGED ON 9-8-19
+	xres = 500; 
+	yres = 360;
 	box.width = 70;
 	box.height = 10;
-	box.center.x = 110; //+ 5*65;
-	box.center.y = 300; //- 5*60;
+	//CENTER.X & CENTER.Y CHANGED ON 9-8-19
+	box.center.x = 110; 
+	box.center.y = 300;
 }
 
 //-----------------------------------------------------------------------------
@@ -206,14 +207,16 @@ void init_opengl(void)
 	glOrtho(0, g.xres, 0, g.yres, -1, 1);
 	//Set the screen background color
 	glClearColor(0.1, 0.1, 0.1, 1.0);
-	glEnable(GL_TEXTURE_2D);	//ADDED 9-8-19
-	initialize_fonts();		//ADDED 9-8-19
+	//ADDED 9-9-10
+	glEnable(GL_TEXTURE_2D);
+	//ADDED 9-8-19
+	initialize_fonts();
+
 }
 
 void makeParticle(int x, int y)
 {
 	//Add a particle to the particle system.
-	//
 	if (g.n >= MAX_PARTICLES)
 		return;
 	cout << "makeParticle() " << x << " " << y << endl;
@@ -221,8 +224,9 @@ void makeParticle(int x, int y)
 	Particle *p = &g.particle[g.n];
 	p->s.center.x = x;
 	p->s.center.y = y;
-	p->velocity.y = ((double)rand() /(double)RAND_MAX) - 2.5;//- 0.25;//0.525;
-	p->velocity.x = ((double)rand() /(double)RAND_MAX) + 0.10; //0.525;
+	//PARTICLE POSITIONS CHANGED ON 9-18-19
+	p->velocity.y = ((double)rand() /(double)RAND_MAX) - 2.5;
+	p->velocity.x = ((double)rand() /(double)RAND_MAX) + 0.10;
 	++g.n;
 }
 
@@ -233,12 +237,12 @@ void check_mouse(XEvent *e)
 
 	//Weed out non-mouse events
 	if (e->type != ButtonRelease &&
-			e->type != ButtonPress &&
-			e->type != MotionNotify) {
+		e->type != ButtonPress &&
+		e->type != MotionNotify) {
 		//This is not a mouse event that we care about.
 		return;
 	}
-	//
+	
 	if (e->type == ButtonRelease) {
 		return;
 	}
@@ -259,20 +263,21 @@ void check_mouse(XEvent *e)
 			makeParticle(e->xbutton.x, y);
 			makeParticle(e->xbutton.x, y);
 			makeParticle(e->xbutton.x, y);
-			makeParticle(e->xbutton.x, y);
-			makeParticle(e->xbutton.x, y);
-			makeParticle(e->xbutton.x, y);
-			makeParticle(e->xbutton.x, y);
-			makeParticle(e->xbutton.x, y);
-			makeParticle(e->xbutton.x, y);
-			makeParticle(e->xbutton.x, y);
 			return;
 		}
+
 		if (e->xbutton.button==3) {
 			//Right button was pressed.
+			int y = g.yres - e->xbutton.y;
+			makeParticle(e->xbutton.x, y);
+			makeParticle(e->xbutton.x, y);
+			makeParticle(e->xbutton.x, y);
+			makeParticle(e->xbutton.x, y);
+			makeParticle(e->xbutton.x, y);
 			return;
 		}
 	}
+
 	if (e->type == MotionNotify) {
 		//The mouse moved!
 		if (savex != e->xbutton.x || savey != e->xbutton.y) {
@@ -310,12 +315,10 @@ int check_keys(XEvent *e)
 
 void movement()
 {
-
 	if (g.n <= 0)
 		return;
 
-	for (int i = 0; i < g.n; i++)
-	{
+	for (int i = 0; i < g.n; i++) {
 		Particle *p = &g.particle[i];
 		p = &g.particle[i];
 		p->s.center.x += p->velocity.x;
@@ -323,26 +326,27 @@ void movement()
 		p->velocity.y -= GRAVITY;
 
 		Shape *s[5];
-		
-		for (int j = 0; j < 5 ; j++){
 		int incValue;
 
-		switch ( j ) {
-			case 0:
-				incValue = 0;
-				break;
-			case 1:
-				incValue = 40;
-				break;
-			case 2:
-				incValue = 80;
-				break;
-			case 3:
-				incValue = 120;
-				break;
-			case 4:
-				incValue = 160;
-				break;}
+		for (int j = 0; j < 5 ; j++) {
+			switch ( j ) {
+				case 0:
+					incValue = 0;
+					break;
+				case 1:
+					incValue = 40;
+					break;
+				case 2:
+					incValue = 80;
+					break;
+				case 3:
+					incValue = 120;
+					break;
+				case 4:
+					incValue = 160;
+					break;
+			}
+
 		s[j] = &g.box;
 		if (p->s.center.y < s[j]->center.y - incValue + s[j]->height
 				&& p->s.center.y > s[j]->center.y - incValue - s[j]->height
@@ -367,7 +371,7 @@ void render()
 	glClear(GL_COLOR_BUFFER_BIT);
 	glColor3ub(90,140,90);
 	Shape *s[5];
-	float w, h;
+  	float w, h;
 	int incValue;
 	Rect r;
 	r.center = 0;
@@ -391,23 +395,51 @@ void render()
 				break;
 		}
 		
-		s[i] = &g.box;	
-		glPushMatrix();
-		glTranslatef(s[i]->center.x + incValue, s[i]->center.y - incValue, s[i]->center.z);	
-		w = s[i]->width;
-		h = s[i]->height;
-		glBegin(GL_QUADS);
-		glVertex2i(-w, -h);
-		glVertex2i(-w,  h);
-		glVertex2i( w,  h);
-		glVertex2i( w, -h);
-		glEnd();
-		glPopMatrix();
+	s[i] = &g.box;	
+	glPushMatrix();
+	glTranslatef(s[i]->center.x + incValue, s[i]->center.y - incValue, s[i]->center.z);	
+	glColor3ub(90,140,90);
+	w = s[i]->width;
+	h = s[i]->height;
+	glBegin(GL_QUADS);
+	glVertex2i(-w, -h);
+	glVertex2i(-w,  h);
+	glVertex2i( w,  h);
+	glVertex2i( w, -h);
+	glEnd();
+	glPopMatrix();
+
+		switch ( i ) {
+			case 0:
+				r.left = s[i]->center.x + incValue - 40;
+				r.bot = s[i]->center.y - incValue - 5;
+				ggprint8b(&r, 16, 0x00ff0000, "Requirements");
+				break;
+			case 1:
+				r.left = s[i]->center.x + incValue - 25;
+				r.bot = s[i]->center.y - incValue - 5;
+				ggprint8b(&r, 16, 0x00ff0000, "Design");
+				break;
+			case 2:
+				r.left = s[i]->center.x + incValue - 25;
+				r.bot = s[i]->center.y - incValue - 5;
+				ggprint8b(&r, 16, 0x00ff0000, "Coding");
+				break;
+			case 3:
+				r.left = s[i]->center.x + incValue - 25;
+				r.bot = s[i]->center.y - incValue - 5;
+				ggprint8b(&r, 16, 0x00ff0000, "Testing");
+				break;
+			case 4:
+				r.left = s[i]->center.x + incValue - 25;
+				r.bot = s[i]->center.y - incValue - 5;
+				ggprint8b(&r, 16, 0x00ff0000, "Maintenace");
+				break;
+		}
 }
 
 	for (int k = 0; k < g.n; k++) {
 		glPushMatrix();
-	//	glColor3ub(150,160,220);
 		Vec *c = &g.particle[k].s.center;
 		w = h = 2;
 		glBegin(GL_QUADS);
@@ -419,40 +451,6 @@ void render()
 		glEnd();
 		glPopMatrix();
 	}
-	
-	for (int j = 0; j < 5 ; j++) {
-		switch ( j ) {
-			case 0:
-				incValue = 0;
-				r.left = s[j]->center.x + incValue - 40;
-				r.bot = s[j]->center.y - incValue - 5;
-				ggprint8b(&r, 16, 0x00ff0000, "Requirements");
-				break;
-			case 1:
-				incValue = 40;
-				r.left = s[j]->center.x + incValue - 25;
-				r.bot = s[j]->center.y - incValue - 5;
-				ggprint8b(&r, 16, 0x00ff0000, "Design");
-				break;
-			case 2:
-				incValue = 80;
-				r.left = s[j]->center.x + incValue - 25;
-				r.bot = s[j]->center.y - incValue - 5;
-				ggprint8b(&r, 16, 0x00ff0000, "Coding");
-				break;
-			case 3:
-				incValue = 120;
-				r.left = s[j]->center.x + incValue - 25;
-				r.bot = s[j]->center.y - incValue - 5;
-				ggprint8b(&r, 16, 0x00ff0000, "Testing");
-				break;
-			case 4:
-				incValue = 160;
-				r.left = s[j]->center.x + incValue - 25;
-				r.bot = s[j]->center.y - incValue - 5;
-				ggprint8b(&r, 16, 0x00ff0000, "Maintenace");
-				break;
-		}
-	}
+
 }
 
