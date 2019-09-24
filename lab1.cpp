@@ -1,5 +1,5 @@
 //Modified by: Nagi Obeid
-//Date: 9-20-19
+//Date: 9-23-19
 
 //3350 Spring 2019 Lab-1 // Homework-1
 //This program demonstrates the use of OpenGL and XWindows
@@ -41,7 +41,7 @@ using namespace std;
 #include "fonts.h"
 const int MAX_PARTICLES = 2000;
 //MODIFIED GRAVITY ON 9-8-19
-const float GRAVITY    	= .05;
+const float GRAVITY    	= .06;
 
 //some structures
 
@@ -163,7 +163,7 @@ X11_wrapper::X11_wrapper()
 		PointerMotionMask |
 		StructureNotifyMask | SubstructureNotifyMask;
 	win = XCreateWindow(dpy, root, 0, 0, w, h, 0, vi->depth,
-			InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
+		InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
 	set_title();
 	glc = glXCreateContext(dpy, vi, NULL, GL_TRUE);
 	glXMakeCurrent(dpy, win, glc);
@@ -194,7 +194,7 @@ void X11_wrapper::swapBuffers()
 {
 	glXSwapBuffers(dpy, win);
 }
-//---------------------------------------------------------------------------
+//-----------------------------------------------------------------------
 
 void init_opengl(void)
 {
@@ -211,7 +211,6 @@ void init_opengl(void)
 	glEnable(GL_TEXTURE_2D);
 	//ADDED 9-8-19
 	initialize_fonts();
-
 }
 
 void makeParticle(int x, int y)
@@ -257,18 +256,14 @@ void check_mouse(XEvent *e)
 			makeParticle(e->xbutton.x, y);
 			makeParticle(e->xbutton.x, y);
 			makeParticle(e->xbutton.x, y);
-			makeParticle(e->xbutton.x, y);
-			makeParticle(e->xbutton.x, y);
-			makeParticle(e->xbutton.x, y);
-			makeParticle(e->xbutton.x, y);
-			makeParticle(e->xbutton.x, y);
-			makeParticle(e->xbutton.x, y);
 			return;
 		}
 
 		if (e->xbutton.button==3) {
 			//Right button was pressed.
 			int y = g.yres - e->xbutton.y;
+			makeParticle(e->xbutton.x, y);
+			makeParticle(e->xbutton.x, y);
 			makeParticle(e->xbutton.x, y);
 			makeParticle(e->xbutton.x, y);
 			makeParticle(e->xbutton.x, y);
@@ -283,7 +278,7 @@ void check_mouse(XEvent *e)
 		if (savex != e->xbutton.x || savey != e->xbutton.y) {
 			savex = e->xbutton.x;
 			savey = e->xbutton.y;
-			//Code placed here will execute whenever the mouse moves.
+		//Code placed here will execute whenever the mouse moves.
 			int y = g.yres - e->xbutton.y;
 			for (int i = 0 ;i < 10; i++) {
 				makeParticle(e->xbutton.x, y);
@@ -346,13 +341,20 @@ void movement()
 					incValue = 160;
 					break;
 			}
-
 		s[j] = &g.box;
 		if (p->s.center.y < s[j]->center.y - incValue + s[j]->height
-				&& p->s.center.y > s[j]->center.y - incValue - s[j]->height
-				&& p->s.center.x > s[j]->center.x + incValue - s[j]->width 
-				&& p->s.center.x < s[j]->center.x + incValue + s[j]->width)
+			&& p->s.center.y > s[j]->center.y - incValue
+			- s[j]->height && p->s.center.x > s[j]->center.x 
+			+ incValue - s[j]->width && p->s.center.x 
+			< s[j]->center.x + incValue + s[j]->width) {
 			p->velocity.y = -p->velocity.y / 6;
+			if ( j != 0) {
+				p->velocity.y = ((double)rand() 
+					/(double)RAND_MAX) - 0;
+				p->velocity.x = ((double)rand() 
+				        /(double)RAND_MAX) + .20;
+			}
+		}
 			
 		}
 
@@ -397,7 +399,8 @@ void render()
 		
 	s[i] = &g.box;	
 	glPushMatrix();
-	glTranslatef(s[i]->center.x + incValue, s[i]->center.y - incValue, s[i]->center.z);	
+	glTranslatef(s[i]->center.x + incValue, s[i]->center.y 
+			- incValue, s[i]->center.z);	
 	glColor3ub(90,140,90);
 	w = s[i]->width;
 	h = s[i]->height;
@@ -437,13 +440,17 @@ void render()
 				break;
 		}
 }
-
 	for (int k = 0; k < g.n; k++) {
 		glPushMatrix();
 		Vec *c = &g.particle[k].s.center;
 		w = h = 2;
 		glBegin(GL_QUADS);
-		glColor3ub(150,160,220);
+		if (k % 2 == 0) {
+			glColor3ub(150,160,220);
+		}
+		else {
+			glColor3ub(120,110,250);
+		}
 		glVertex2i(c->x-w, c->y-h);
 		glVertex2i(c->x-w, c->y+h);
 		glVertex2i(c->x+w, c->y+h);
